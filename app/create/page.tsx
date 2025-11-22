@@ -21,12 +21,12 @@ import { ElegantTemplate } from "@/components/resume-templates/elegant";
 import { PortfolioTemplate } from "@/components/resume-templates/portfolio";
 import { TemplateWrapper } from "@/components/resume-templates/TemplateWrapper";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { 
+import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger 
+  DialogTrigger
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { ResumeData } from "@/lib/types";
@@ -40,17 +40,17 @@ import axios from 'axios';
 // Add this custom hook for debouncing
 function useDebounce<T>(value: T, delay: number): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
-  
+
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedValue(value);
     }, delay);
-    
+
     return () => {
       clearTimeout(handler);
     };
   }, [value, delay]);
-  
+
   return debouncedValue;
 }
 
@@ -139,8 +139,8 @@ const CreatePageContent = () => {
   }, []);
 
   // Find the selected template with memoization
-  const selectedTemplateData = useMemo(() => 
-    templates.find(t => t.id === selectedTemplate), 
+  const selectedTemplateData = useMemo(() =>
+    templates.find(t => t.id === selectedTemplate),
     [selectedTemplate]
   );
 
@@ -152,14 +152,14 @@ const CreatePageContent = () => {
 
   const handleDownload = async () => {
     if (!resumeRef.current) return;
-    
+
     try {
       setIsDownloading(true);
       toast({
         title: "Preparing download...",
         description: "Please wait while we generate your resume PDF.",
       });
-      
+
       // Apply print-specific styles to ensure colors and content render correctly
       const style = document.createElement('style');
       style.innerHTML = `
@@ -171,11 +171,11 @@ const CreatePageContent = () => {
         }
       `;
       document.head.appendChild(style);
-      
+
       // Create a clone of the resume element for manipulation
       const resumeElement = resumeRef.current;
       const clone = resumeElement.cloneNode(true) as HTMLElement;
-      
+
       // Create a wrapper with A4 dimensions
       const wrapper = document.createElement('div');
       wrapper.style.width = '794px'; // A4 width at 96 DPI
@@ -185,7 +185,7 @@ const CreatePageContent = () => {
       wrapper.style.padding = '40px';
       wrapper.style.backgroundColor = 'white';
       wrapper.style.boxSizing = 'border-box';
-      
+
       // Adjust the clone to fit A4 proportions
       clone.style.transform = 'none';
       clone.style.width = '100%';
@@ -193,14 +193,14 @@ const CreatePageContent = () => {
       clone.style.margin = '0';
       clone.style.boxShadow = 'none';
       clone.style.border = 'none';
-      
+
       // Append the clone to the wrapper and the wrapper to the body
       wrapper.appendChild(clone);
       document.body.appendChild(wrapper);
-      
+
       // Optimize canvas generation with better settings
       const canvas = await html2canvas(wrapper, {
-        scale: 2, // Balance between quality and performance
+        scale: 1.5, // Reduced from 2 for better performance while maintaining acceptable quality
         useCORS: true,
         allowTaint: true,
         backgroundColor: "#ffffff",
@@ -214,11 +214,11 @@ const CreatePageContent = () => {
           }
         }
       });
-      
+
       // Remove the wrapper after capturing
       document.body.removeChild(wrapper);
       document.head.removeChild(style);
-      
+
       // Create and optimize PDF with proper A4 dimensions
       const imgData = canvas.toDataURL('image/jpeg', 0.95); // Slightly reduced quality for better performance
       const pdf = new jsPDF({
@@ -227,17 +227,17 @@ const CreatePageContent = () => {
         format: 'a4',
         compress: true,
       });
-      
+
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const ratio = canvas.width / canvas.height;
       const scaledHeight = pdfWidth / ratio;
-      
+
       // Add image to PDF with proper positioning
       pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, scaledHeight);
-      
+
       // Save the PDF with the user's name
       pdf.save(`${resumeData.name.replace(/\s+/g, '_')}_resume.pdf`);
-      
+
       toast({
         title: "Download complete!",
         description: "Your resume has been downloaded successfully.",
@@ -303,33 +303,33 @@ const CreatePageContent = () => {
                   </DialogHeader>
                   <ScrollArea className="h-[60vh]">
                     <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4 p-2 sm:p-4">
-                    {templates.map((template) => (
-                      <Card 
-                        key={template.id}
-                        className={cn(
-                          "cursor-pointer hover:bg-muted/50 transition-colors p-2 sm:p-4",
-                          selectedTemplate === template.id && "border-primary"
-                        )}
-                        onClick={() => setSelectedTemplate(template.id)}
-                      >
-                        <div className="aspect-[1/1.4] rounded-lg border bg-white flex items-center justify-center overflow-hidden relative">
-                          {/* Use TemplateWrapper for efficient preview rendering */}
-                          <TemplateWrapper
-                            Template={template.component}
-                            content={sampleData} 
-                            isPreview={true}
-                          />
-                        </div>
-                        <h3 className="text-xs sm:text-sm font-medium mt-2 text-center">{template.name}</h3>
-                      </Card>
-                    ))}
-                  </div>
+                      {templates.map((template) => (
+                        <Card
+                          key={template.id}
+                          className={cn(
+                            "cursor-pointer hover:bg-muted/50 transition-colors p-2 sm:p-4",
+                            selectedTemplate === template.id && "border-primary"
+                          )}
+                          onClick={() => setSelectedTemplate(template.id)}
+                        >
+                          <div className="aspect-[1/1.4] rounded-lg border bg-white flex items-center justify-center overflow-hidden relative">
+                            {/* Use TemplateWrapper for efficient preview rendering */}
+                            <TemplateWrapper
+                              Template={template.component}
+                              content={sampleData}
+                              isPreview={true}
+                            />
+                          </div>
+                          <h3 className="text-xs sm:text-sm font-medium mt-2 text-center">{template.name}</h3>
+                        </Card>
+                      ))}
+                    </div>
                   </ScrollArea>
                 </DialogContent>
               </Dialog>
-              <Button 
-                variant="outline" 
-                onClick={handleEnhanceWithAI} 
+              <Button
+                variant="outline"
+                onClick={handleEnhanceWithAI}
                 disabled={isEnhancing}
                 className="text-sm sm:text-base"
               >
@@ -353,8 +353,8 @@ const CreatePageContent = () => {
           <Card className="sticky top-2 sm:top-6">
             <div className="p-2 sm:p-4 border-b flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-0">
               <h2 className="text-lg sm:text-xl font-semibold">Preview</h2>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="gap-2 w-full sm:w-auto text-sm sm:text-base"
                 onClick={handleDownload}
                 disabled={isDownloading}
@@ -366,12 +366,12 @@ const CreatePageContent = () => {
             <ScrollArea className="h-[400px] sm:h-[600px] md:h-[700px] lg:h-[800px]">
               <div className="p-3 sm:p-6 relative flex justify-center">
                 {selectedTemplateData && (
-                  <div 
+                  <div
                     className="border rounded-lg p-2 sm:p-4 bg-white print:border-none print:shadow-none relative max-w-full overflow-hidden"
                     ref={resumeRef}
                     style={{
                       aspectRatio: "210/297", // A4 aspect ratio
-                      width: "100%", 
+                      width: "100%",
                       maxHeight: "100%",
                       transformOrigin: "top center",
                       margin: "0 auto"

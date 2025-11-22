@@ -18,7 +18,7 @@ export async function POST(request: Request) {
 
     // Try OpenAI API first if the key is available
     const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-    
+
     if (OPENAI_API_KEY) {
       try {
         return await enhanceWithOpenAI(resume, OPENAI_API_KEY);
@@ -27,24 +27,24 @@ export async function POST(request: Request) {
         // Fall back to Gemini if OpenAI fails
       }
     }
-    
+
     // Fall back to Gemini API
     const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-    
+
     if (!GEMINI_API_KEY) {
-      return NextResponse.json({ 
-        error: 'No AI API keys available. Configure either OPENAI_API_KEY or GEMINI_API_KEY.' 
+      return NextResponse.json({
+        error: 'No AI API keys available. Configure either OPENAI_API_KEY or GEMINI_API_KEY.'
       }, { status: 500 });
     }
-    
+
     try {
       return await enhanceWithGemini(resume, GEMINI_API_KEY);
     } catch (geminiError) {
       console.error('Gemini API error:', geminiError);
       // If both APIs fail, return the original resume with an error message
-      return NextResponse.json({ 
+      return NextResponse.json({
         enhancedResume: resume,
-        error: 'Failed to enhance resume. AI services are currently unavailable.' 
+        error: 'Failed to enhance resume. AI services are currently unavailable.'
       }, { status: 500 });
     }
   } catch (err) {
@@ -56,7 +56,7 @@ export async function POST(request: Request) {
 async function enhanceWithOpenAI(resume: any, apiKey: string) {
   try {
     const endpoint = 'https://api.openai.com/v1/chat/completions';
-    
+
     const prompt = `Improve the professionalism and clarity of the following resume. 
 Make the language more impactful and professional, and enhance the formatting and organization.
 Input resume:
@@ -84,34 +84,34 @@ Return ONLY a valid JSON object with the same structure as the input, with your 
     if (!response.ok) {
       const errorData = await response.text();
       console.error('Error from OpenAI API:', errorData);
-      return NextResponse.json({ 
-        error: `Failed to enhance resume with OpenAI: ${response.status} ${response.statusText}` 
+      return NextResponse.json({
+        error: `Failed to enhance resume with OpenAI: ${response.status} ${response.statusText}`
       }, { status: 500 });
     }
 
     const responseData = await response.json();
-    
+
     if (!responseData.choices || !responseData.choices[0] || !responseData.choices[0].message) {
       console.error('Unexpected OpenAI response structure:', JSON.stringify(responseData));
       return NextResponse.json({ error: 'Invalid response from OpenAI' }, { status: 500 });
     }
-    
+
     const enhancedText = responseData.choices[0].message.content;
-    
+
     // Parse the response
     try {
       // Try to extract JSON 
-      const jsonMatch = enhancedText.match(/```json\s*([\s\S]*?)\s*```/) || 
-                        enhancedText.match(/\{[\s\S]*\}/);
-                        
+      const jsonMatch = enhancedText.match(/```json\s*([\s\S]*?)\s*```/) ||
+        enhancedText.match(/\{[\s\S]*\}/);
+
       const jsonStr = jsonMatch ? jsonMatch[0] : enhancedText;
       const enhancedResume = JSON.parse(jsonStr.replace(/```json|```/g, '').trim());
-      
+
       return NextResponse.json({ enhancedResume });
     } catch (parseError) {
       console.error('Error parsing enhanced resume JSON from OpenAI:', parseError);
       console.error('Raw text received:', enhancedText);
-      
+
       // Fallback
       return NextResponse.json({
         enhancedResume: resume,
@@ -132,9 +132,9 @@ async function enhanceWithGemini(resume: any, apiKey: string) {
     const modelName = "gemini-1.5-pro-latest";
     const apiVersion = "v1beta";
     const endpoint = `https://generativelanguage.googleapis.com/${apiVersion}/models/${modelName}:generateContent?key=${apiKey}`;
-    
+
     console.log(`Trying endpoint: ${endpoint}`);
-    
+
     const prompt = `Improve the professionalism and clarity of the following resume:
 ${JSON.stringify(resume, null, 2)}
 
@@ -159,50 +159,50 @@ IMPORTANT:
         topK: 40
       }
     };
-    
+
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(requestBody)
     });
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`Model ${modelName} failed:`, errorText);
-      return NextResponse.json({ 
-        error: `Failed to enhance resume with Gemini model ${modelName}.` 
+      return NextResponse.json({
+        error: `Failed to enhance resume with Gemini model ${modelName}.`
       }, { status: 500 });
     }
-    
+
     console.log(`Successfully used model: ${modelName}`);
     const responseData = await response.json();
-    
+
     // Extract the response text from Gemini's response structure
     let enhancedResumeText = '';
-    
+
     // Handle v1beta response format
-    if (responseData.candidates && 
-        responseData.candidates[0] && 
-        responseData.candidates[0].content && 
-        responseData.candidates[0].content.parts && 
-        responseData.candidates[0].content.parts[0] && 
-        responseData.candidates[0].content.parts[0].text) {
+    if (responseData.candidates &&
+      responseData.candidates[0] &&
+      responseData.candidates[0].content &&
+      responseData.candidates[0].content.parts &&
+      responseData.candidates[0].content.parts[0] &&
+      responseData.candidates[0].content.parts[0].text) {
       enhancedResumeText = responseData.candidates[0].content.parts[0].text;
-    } 
+    }
     else {
       console.error('Unexpected response structure from Gemini:', JSON.stringify(responseData));
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'Invalid response structure from Gemini AI',
-        responseData: responseData 
+        responseData: responseData
       }, { status: 500 });
     }
-    
+
     // Log the raw response
     console.log('Raw response text:', enhancedResumeText);
-    
+
     // Extract JSON from the response text - look for content between markdown code blocks
     const jsonMatch = enhancedResumeText.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-    
+
     let jsonStr = '';
     if (jsonMatch && jsonMatch[1]) {
       jsonStr = jsonMatch[1];
@@ -218,14 +218,14 @@ IMPORTANT:
         });
       }
     }
-    
+
     // Try to parse the JSON
     try {
       const enhancedResume = JSON.parse(jsonStr);
       return NextResponse.json({ enhancedResume });
     } catch (parseError) {
       console.error('Error parsing JSON:', parseError);
-      
+
       // Fallback to original resume
       return NextResponse.json({
         enhancedResume: resume,
@@ -238,76 +238,4 @@ IMPORTANT:
   }
 }
 
-// Enhanced JSON cleaning logic to handle missing commas and improperly formatted strings
-function cleanAndParseJSON(jsonString: string): any {
-  try {
-    // Add missing commas between properties
-    jsonString = jsonString.replace(/"\s*([a-zA-Z0-9_]+)\s*"\s*:/g, '"$1":');
-    jsonString = jsonString.replace(/}(\s*){/g, '},{');
 
-    // Fix improperly formatted strings
-    jsonString = jsonString.replace(/"([^"\n]+)\s*([^"\n]+)"/g, '"$1, $2"');
-
-    // Ensure all keys and values are properly quoted
-    jsonString = jsonString.replace(/([a-zA-Z0-9_]+)\s*:/g, '"$1":');
-
-    // Remove trailing commas
-    jsonString = jsonString.replace(/,\s*([}\]])/g, '$1');
-
-    return JSON.parse(jsonString);
-  } catch (error) {
-    console.error('Error cleaning and parsing JSON:', error);
-    throw new Error('Invalid JSON format');
-  }
-}
-
-// Function to discover available Gemini models
-async function discoverGeminiModels(apiKey: string) {
-  const apiVersions = ['v1', 'v1beta', 'v1beta1', 'v1beta2', 'v1beta3'];
-  const modelResults: any[] = [];
-  
-  for (const version of apiVersions) {
-    try {
-      const listModelsUrl = `https://generativelanguage.googleapis.com/${version}/models?key=${apiKey}`;
-      
-      console.log(`Trying to list models with API version: ${version}`);
-      const response = await fetch(listModelsUrl);
-      
-      if (response.ok) {
-        const data = await response.json();
-        
-        if (data.models && Array.isArray(data.models)) {
-          // Filter for text generation models
-          const textModels = data.models.filter((model: any) => {
-            const modelName = model.name || '';
-            const displayName = model.displayName || '';
-            const supportedGenerationMethods = model.supportedGenerationMethods || [];
-            
-            // Filter for gemini models that support content generation
-            return (modelName.includes('gemini') || displayName.includes('Gemini')) && 
-                  (supportedGenerationMethods.includes('generateContent') || 
-                   supportedGenerationMethods.includes('generateText'));
-          });
-          
-          if (textModels.length > 0) {
-            console.log(`Found ${textModels.length} Gemini models in ${version}`);
-            
-            // Add these models to our results with their API version
-            textModels.forEach((model: any) => {
-              modelResults.push({
-                name: model.name.split('/').pop(), // Extract just the model name without the prefix
-                displayName: model.displayName,
-                apiVersion: version,
-                supportedGenerationMethods: model.supportedGenerationMethods
-              });
-            });
-          }
-        }
-      }
-    } catch (error) {
-      console.error(`Error listing models for ${version}:`, error);
-    }
-  }
-  
-  return modelResults;
-}
