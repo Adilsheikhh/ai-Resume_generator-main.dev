@@ -19,6 +19,8 @@ import { ModernPlusTemplate } from "@/components/resume-templates/modern-plus";
 import { VibrantTemplate } from "@/components/resume-templates/vibrant";
 import { ElegantTemplate } from "@/components/resume-templates/elegant";
 import { PortfolioTemplate } from "@/components/resume-templates/portfolio";
+import { StartupTemplate } from "@/components/resume-templates/startup";
+import { AcademicTemplate } from "@/components/resume-templates/academic";
 import { TemplateWrapper } from "@/components/resume-templates/TemplateWrapper";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -120,6 +122,8 @@ const templates = [
   { id: "elegant", name: "Elegant", component: ElegantTemplate },
   { id: "portfolio", name: "Portfolio", component: PortfolioTemplate },
   { id: "vibrant", name: "Vibrant", component: VibrantTemplate },
+  { id: "startup", name: "Startup", component: StartupTemplate },
+  { id: "academic", name: "Academic", component: AcademicTemplate },
 ];
 
 const CreatePageContent = () => {
@@ -287,40 +291,148 @@ const CreatePageContent = () => {
 
   return (
     <div className="container mx-auto py-4 sm:py-6 px-3 sm:px-4">
-      <div className="flex flex-col lg:flex-row gap-6">
+      {/* Mobile View: Tabs */}
+      <div className="lg:hidden">
+        <Tabs defaultValue="editor" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="editor">Editor</TabsTrigger>
+            <TabsTrigger value="preview">Preview</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="editor" className="space-y-4">
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <h1 className="text-xl font-bold font-outfit">Create Resume</h1>
+                <div className="flex gap-2">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm">Template</Button>
+                    </DialogTrigger>
+                    <DialogContent className="w-[95vw] max-w-3xl max-h-[80vh] p-4">
+                      <DialogHeader>
+                        <DialogTitle>Choose Template</DialogTitle>
+                      </DialogHeader>
+                      <ScrollArea className="h-[60vh]">
+                        <div className="grid grid-cols-2 gap-3 p-2">
+                          {templates.map((template) => (
+                            <Card
+                              key={template.id}
+                              className={cn(
+                                "cursor-pointer hover:bg-muted/50 transition-colors p-2",
+                                selectedTemplate === template.id && "border-primary"
+                              )}
+                              onClick={() => setSelectedTemplate(template.id)}
+                            >
+                              <div className="aspect-[1/1.4] rounded-lg border bg-white flex items-center justify-center overflow-hidden relative">
+                                <TemplateWrapper
+                                  Template={template.component}
+                                  content={sampleData}
+                                  isPreview={true}
+                                />
+                              </div>
+                              <h3 className="text-xs font-medium mt-2 text-center">{template.name}</h3>
+                            </Card>
+                          ))}
+                        </div>
+                      </ScrollArea>
+                    </DialogContent>
+                  </Dialog>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleEnhanceWithAI}
+                    disabled={isEnhancing}
+                  >
+                    {isEnhancing ? "..." : "AI Enhance"}
+                  </Button>
+                </div>
+              </div>
+
+              <Card className="p-4">
+                <ResumeSection
+                  data={resumeData}
+                  onChangeAction={handleResumeDataChange}
+                  isLoading={isEnhancing}
+                />
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="preview">
+            <Card className="p-2">
+              <div className="mb-4 flex justify-between items-center">
+                <h2 className="font-semibold font-outfit">Preview</h2>
+                <Button size="sm" onClick={handleDownload} disabled={isDownloading}>
+                  <Download className="h-4 w-4 mr-2" />
+                  {isDownloading ? "..." : "Download"}
+                </Button>
+              </div>
+              <ScrollArea className="h-[calc(100vh-200px)]">
+                <div className="p-2 flex justify-center bg-muted/20 rounded-lg">
+                  {selectedTemplateData && (
+                    <div
+                      className="border rounded-lg bg-white shadow-sm relative max-w-full overflow-hidden"
+                      ref={resumeRef}
+                      style={{
+                        width: "100%",
+                        maxWidth: "210mm", // A4 width
+                        aspectRatio: "210/297",
+                      }}
+                    >
+                      {isEnhancing && (
+                        <div className="absolute inset-0 bg-black/10 backdrop-blur-sm z-10 flex flex-col items-center justify-center p-4">
+                          <Sparkles className="h-8 w-8 text-primary animate-spin mb-2" />
+                          <p className="text-sm font-medium text-primary animate-pulse">Enhancing...</p>
+                        </div>
+                      )}
+                      <div className="transform-gpu w-full h-full">
+                        {TemplateComponent && (
+                          <TemplateComponent content={debouncedResumeData} />
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      {/* Desktop View: Split Screen */}
+      <div className="hidden lg:flex flex-row gap-8">
         {/* Left Panel - Editor */}
-        <div className="w-full lg:w-1/2 space-y-4 sm:space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
-            <h1 className="text-2xl sm:text-3xl font-bold">Create Resume</h1>
-            <div className="flex flex-wrap gap-2">
+        <div className="w-1/2 space-y-6">
+          <div className="flex items-center justify-between">
+            <h1 className="text-3xl font-bold font-outfit text-primary">Create Resume</h1>
+            <div className="flex gap-3">
               <Dialog>
                 <DialogTrigger asChild>
-                  <Button variant="outline" className="text-sm sm:text-base">Change Template</Button>
+                  <Button variant="outline">Change Template</Button>
                 </DialogTrigger>
-                <DialogContent className="w-[95vw] max-w-3xl max-h-[80vh] p-4 sm:p-6">
+                <DialogContent className="max-w-4xl max-h-[85vh] p-6">
                   <DialogHeader>
-                    <DialogTitle>Choose Template</DialogTitle>
+                    <DialogTitle className="text-2xl font-outfit">Choose Template</DialogTitle>
                   </DialogHeader>
-                  <ScrollArea className="h-[60vh]">
-                    <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-4 p-2 sm:p-4">
+                  <ScrollArea className="h-[65vh] pr-4">
+                    <div className="grid grid-cols-3 gap-6 p-2">
                       {templates.map((template) => (
                         <Card
                           key={template.id}
                           className={cn(
-                            "cursor-pointer hover:bg-muted/50 transition-colors p-2 sm:p-4",
-                            selectedTemplate === template.id && "border-primary"
+                            "cursor-pointer hover:ring-2 hover:ring-primary/50 transition-all p-4",
+                            selectedTemplate === template.id && "ring-2 ring-primary border-primary"
                           )}
                           onClick={() => setSelectedTemplate(template.id)}
                         >
-                          <div className="aspect-[1/1.4] rounded-lg border bg-white flex items-center justify-center overflow-hidden relative">
-                            {/* Use TemplateWrapper for efficient preview rendering */}
+                          <div className="aspect-[1/1.4] rounded-lg border bg-white shadow-sm flex items-center justify-center overflow-hidden relative mb-3">
                             <TemplateWrapper
                               Template={template.component}
                               content={sampleData}
                               isPreview={true}
                             />
                           </div>
-                          <h3 className="text-xs sm:text-sm font-medium mt-2 text-center">{template.name}</h3>
+                          <h3 className="font-medium text-center">{template.name}</h3>
                         </Card>
                       ))}
                     </div>
@@ -328,18 +440,18 @@ const CreatePageContent = () => {
                 </DialogContent>
               </Dialog>
               <Button
-                variant="outline"
+                variant="secondary"
                 onClick={handleEnhanceWithAI}
                 disabled={isEnhancing}
-                className="text-sm sm:text-base"
+                className="gap-2"
               >
+                <Sparkles className="w-4 h-4" />
                 {isEnhancing ? "Enhancing..." : "Enhance with AI"}
               </Button>
             </div>
           </div>
 
-          {/* Form fields */}
-          <Card className="p-6">
+          <Card className="p-6 shadow-md border-muted">
             <ResumeSection
               data={resumeData}
               onChangeAction={handleResumeDataChange}
@@ -349,60 +461,61 @@ const CreatePageContent = () => {
         </div>
 
         {/* Right Panel - Preview */}
-        <div className="w-full lg:w-1/2">
-          <Card className="sticky top-2 sm:top-6">
-            <div className="p-2 sm:p-4 border-b flex flex-col sm:flex-row justify-between items-center gap-2 sm:gap-0">
-              <h2 className="text-lg sm:text-xl font-semibold">Preview</h2>
+        <div className="w-1/2">
+          <div className="sticky top-6 space-y-4">
+            <div className="flex justify-between items-center bg-card p-4 rounded-lg border shadow-sm">
+              <h2 className="text-xl font-semibold font-outfit">Live Preview</h2>
               <Button
-                variant="outline"
-                className="gap-2 w-full sm:w-auto text-sm sm:text-base"
+                className="gap-2 min-w-[140px]"
                 onClick={handleDownload}
                 disabled={isDownloading}
               >
-                <Download className="h-3 w-3 sm:h-4 sm:w-4" />
+                <Download className="h-4 w-4" />
                 {isDownloading ? "Generating..." : "Download PDF"}
               </Button>
             </div>
-            <ScrollArea className="h-[400px] sm:h-[600px] md:h-[700px] lg:h-[800px]">
-              <div className="p-3 sm:p-6 relative flex justify-center">
-                {selectedTemplateData && (
-                  <div
-                    className="border rounded-lg p-2 sm:p-4 bg-white print:border-none print:shadow-none relative max-w-full overflow-hidden"
-                    ref={resumeRef}
-                    style={{
-                      aspectRatio: "210/297", // A4 aspect ratio
-                      width: "100%",
-                      maxHeight: "100%",
-                      transformOrigin: "top center",
-                      margin: "0 auto"
-                    }}
-                  >
-                    {isEnhancing && (
-                      <div className="absolute inset-0 bg-black/10 backdrop-blur-sm z-10 flex flex-col items-center justify-center p-4">
-                        <div className="animate-pulse flex flex-col items-center gap-2">
-                          <div className="relative">
-                            <Sparkles className="h-8 w-8 sm:h-12 sm:w-12 text-primary animate-spin" />
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <div className="h-3 w-3 sm:h-4 sm:w-4 rounded-full bg-primary animate-ping" />
+
+            <div className="h-[calc(100vh-140px)] rounded-xl border bg-muted/30 p-8 overflow-hidden flex justify-center items-start shadow-inner">
+              <ScrollArea className="h-full w-full">
+                <div className="flex justify-center min-h-full pb-8">
+                  {selectedTemplateData && (
+                    <div
+                      className="bg-white shadow-xl print:shadow-none relative transition-all duration-300 ease-in-out"
+                      ref={resumeRef}
+                      style={{
+                        width: "210mm",
+                        minHeight: "297mm",
+                        transform: "scale(0.85)", // Scale down slightly to fit better
+                        transformOrigin: "top center",
+                      }}
+                    >
+                      {isEnhancing && (
+                        <div className="absolute inset-0 bg-white/50 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center">
+                          <div className="bg-white p-6 rounded-xl shadow-2xl flex flex-col items-center gap-4 border">
+                            <div className="relative">
+                              <Sparkles className="h-10 w-10 text-primary animate-spin" />
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="h-3 w-3 rounded-full bg-primary animate-ping" />
+                              </div>
+                            </div>
+                            <div className="text-center">
+                              <p className="text-lg font-bold text-primary">Enhancing Content</p>
+                              <p className="text-sm text-muted-foreground">AI is polishing your resume...</p>
                             </div>
                           </div>
-                          <p className="text-base sm:text-xl font-medium text-primary animate-pulse text-center">Enhancing Resume...</p>
-                          <p className="text-xs sm:text-sm text-muted-foreground text-center max-w-xs">
-                            Our AI is working to improve your resume&apos;s language and formatting for better results
-                          </p>
                         </div>
-                      </div>
-                    )}
-                    <div className="transform-gpu w-full h-full">
-                      {TemplateComponent && (
-                        <TemplateComponent content={debouncedResumeData} />
                       )}
+                      <div className="w-full h-full">
+                        {TemplateComponent && (
+                          <TemplateComponent content={debouncedResumeData} />
+                        )}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
-          </Card>
+                  )}
+                </div>
+              </ScrollArea>
+            </div>
+          </div>
         </div>
       </div>
     </div>

@@ -5,7 +5,7 @@ interface TemplateProps {
   content: ResumeData;
 }
 
-export const TemplateWrapper: React.FC<{ 
+export const TemplateWrapper: React.FC<{
   Template: React.ComponentType<TemplateProps>;
   content: ResumeData;
   isPreview?: boolean;
@@ -18,6 +18,6 @@ export const TemplateWrapper: React.FC<{
       </div>
     );
   }
-  
+
   return <Template content={content} />;
 };

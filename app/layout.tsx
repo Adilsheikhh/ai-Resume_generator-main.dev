@@ -1,4 +1,4 @@
-import { Inter } from 'next/font/google';
+import { Inter, Outfit } from 'next/font/google';
 import { Providers } from '@/components/providers';
 import { Toaster } from '@/components/ui/toaster';
 import './globals.css';
@@ -8,18 +8,13 @@ import Head from 'next/head';
 const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
-  fallback: [
-    'system-ui',
-    '-apple-system',
-    'BlinkMacSystemFont',
-    'Segoe UI',
-    'Roboto',
-    'Helvetica Neue',
-    'Arial',
-    'sans-serif'
-  ],
-  preload: true,
   variable: '--font-inter',
+});
+
+const outfit = Outfit({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-outfit',
 });
 
 // Define system font fallbacks
@@ -62,7 +57,7 @@ export default function RootLayout({
         <link rel="shortcut icon" href="/icon.png" type="image/png" />
         <link rel="apple-touch-icon" href="/apple-icon.png" />
       </head>
-      <body className={`${inter.variable}`}>
+      <body className={`${inter.variable} ${outfit.variable}`}>
         <Providers>
           {children}
           <Toaster />
