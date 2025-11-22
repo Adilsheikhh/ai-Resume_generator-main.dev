@@ -10,6 +10,7 @@ export interface ResumeData {
   experience: Array<{
     position: string;
     company: string;
+    location?: string;
     duration: string;
     description: string[];
   }>;
